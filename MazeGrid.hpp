@@ -7,7 +7,7 @@
 #include <SFML/Graphics/RenderWindow.hpp>
 
 enum class RoomStatus {
-  Unvisited, Visited, Revisited, Current
+  Unvisited, Visited, Revisited, Current, Origin, Goal
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -17,6 +17,7 @@ private:
   int x_pos, y_pos;
   RoomStatus status;
   bool upperWall, lowerWall, leftWall, rightWall;
+  bool upperPath, lowerPath, leftPath, rightPath;
 
 public:
   MazeRoom(int x_pos, int y_pos) {
@@ -24,20 +25,34 @@ public:
     this->y_pos = y_pos;
     status = RoomStatus::Unvisited;
     upperWall = lowerWall = leftWall = rightWall = true;
+    upperPath = lowerPath = leftPath = rightPath = false;
   }
 
-  bool hasUpperWall() { return upperWall; }
-  bool hasLowerWall() { return lowerWall; }
-  bool hasLeftWall() { return leftWall; }
-  bool hasRightWall() { return rightWall; }
+  bool hasUpperWall()   { return upperWall; }
+  bool hasLowerWall()   { return lowerWall; }
+  bool hasLeftWall()    { return leftWall; }
+  bool hasRightWall()   { return rightWall; }
+
+  bool hasUpperPath()   { return upperPath; }
+  bool hasLowerPath()   { return lowerPath; }
+  bool hasLeftPath()    { return leftPath; }
+  bool hasRightPath()   { return rightPath; }
+
   int getXpos() { return x_pos; }
   int getYpos() { return y_pos; }
+
   RoomStatus getStatus() { return status; }
 
-  void setUpperWall(bool bValue) { upperWall = bValue; }
-  void setLowerWall(bool bValue) { lowerWall = bValue; }
-  void setLeftWall(bool bValue) { leftWall = bValue; }
-  void setRightWall(bool bValue) { rightWall = bValue; }
+  void setUpperWall(bool bValue)    { upperWall = bValue; }
+  void setLowerWall(bool bValue)    { lowerWall = bValue; }
+  void setLeftWall(bool bValue)     { leftWall = bValue; }
+  void setRightWall(bool bValue)    { rightWall = bValue; }
+
+  void setUpperPath(bool bValue)    { upperPath = bValue; }
+  void setLowerPath(bool bValue)    { lowerPath = bValue; }
+  void setLeftPath(bool bValue)     { leftPath = bValue; }
+  void setRightPath(bool bValue)    { rightPath = bValue; }
+
   void setStatus(RoomStatus status) { this->status = status; }
 };
 
@@ -45,8 +60,8 @@ public:
 
 class MazeGrid : public ScrnGrid {
 private:
-  sf::Color visitedColor = sf::Color(20, 74, 219);
-  sf::Color revisitedColor = sf::Color(232, 92, 0);
+  sf::Color visitedColor = sf::Color(232, 92, 0);
+  sf::Color revisitedColor = sf::Color(20, 74, 219);
   sf::Color currentColor = sf::Color(255, 255, 255);
   sf::Color startColor = sf::Color(220, 0, 0);
   sf::Color goalColor = sf::Color(230, 24, 240);
@@ -61,7 +76,7 @@ private:
   sf::Vector2i lowerWallPos = sf::Vector2i(texAreaWidth * 2, 0);
   sf::Vector2i leftWallPos  = sf::Vector2i(texAreaWidth * 3, 0);
   sf::Vector2i rightWallPos = sf::Vector2i(texAreaWidth * 4, 0);
-  sf::Vector2i solidColorPos= sf::Vector2i(0, texAreaHeight);
+  sf::Vector2i solidColorPos = sf::Vector2i(0, texAreaHeight);
   sf::Vector2i upperPathPos = sf::Vector2i(texAreaWidth, texAreaHeight);
   sf::Vector2i lowerPathPos = sf::Vector2i(texAreaWidth * 2, texAreaHeight);
   sf::Vector2i leftPathPos  = sf::Vector2i(texAreaWidth * 3, texAreaHeight);
@@ -103,7 +118,7 @@ public:
   bool canGoDown(int i, int j) {
     if(j == getRows() - 1) // Posicion actual en el borde inferior
       return false;
-    if(room(i , j + 1).getStatus() == RoomStatus::Unvisited)
+    if(room(i, j + 1).getStatus() == RoomStatus::Unvisited)
       return true;
     return false;
   }
@@ -125,30 +140,40 @@ public:
   }
 
   bool hasNeighbours(int i, int j) {
-    if(canGoDown(i,j))  return true;
-    if(canGoLeft(i,j))  return true;
-    if(canGoRight(i,j)) return true;
-    if(canGoUp(i,j))    return true;
+    if(canGoDown(i, j))
+      return true;
+    if(canGoLeft(i, j))
+      return true;
+    if(canGoRight(i, j))
+      return true;
+    if(canGoUp(i, j))
+      return true;
 
     return false;
   }
 
   void drawRoom(int i, int j, sf::RenderWindow& window) {
+    sprite.setTextureRect(sf::IntRect(solidColorPos, texAreaSize));
     switch(room(i, j).getStatus()) {
     case RoomStatus::Unvisited:
       sprite.setTextureRect(sf::IntRect(noColorPos, texAreaSize));
       break;
     case RoomStatus::Visited:
-      sprite.setTextureRect(sf::IntRect(solidColorPos, texAreaSize));
       sprite.setColor(visitedColor);
       break;
     case RoomStatus::Revisited:
-      sprite.setTextureRect(sf::IntRect(solidColorPos, texAreaSize));
       sprite.setColor(revisitedColor);
       break;
     case RoomStatus::Current:
-      sprite.setTextureRect(sf::IntRect(solidColorPos, texAreaSize));
       sprite.setColor(currentColor);
+      break;
+    case RoomStatus::Origin:
+      sprite.setColor(startColor);
+      break;
+    case RoomStatus::Goal:
+      sprite.setColor(goalColor);
+      break;
+    default:
       break;
     }
     sprite.setPosition(room(i, j).getXpos(), room(i, j).getYpos());
@@ -175,6 +200,24 @@ public:
     sprite.setColor(wallColor);
     sprite.setTextureRect(sf::IntRect(noColorPos, texAreaSize));
     window.draw(sprite);
+
+    sprite.setColor(pathColor);
+    if(room(i, j).hasUpperPath()) {
+      sprite.setTextureRect(sf::IntRect(upperPathPos, texAreaSize));
+      window.draw(sprite);
+    }
+    if(room(i, j).hasLowerPath()) {
+      sprite.setTextureRect(sf::IntRect(lowerPathPos, texAreaSize));
+      window.draw(sprite);
+    }
+    if(room(i, j).hasLeftPath()) {
+      sprite.setTextureRect(sf::IntRect(leftPathPos, texAreaSize));
+      window.draw(sprite);
+    }
+    if(room(i, j).hasRightPath()) {
+      sprite.setTextureRect(sf::IntRect(rightPathPos, texAreaSize));
+      window.draw(sprite);
+    }
   }
 };
 

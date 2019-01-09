@@ -17,6 +17,7 @@ private:
   int crntBranches;
   int totalRooms;
   int visitedRooms;
+  bool completed;
   std::forward_list<std::stack<sf::Vector2i>*> indxLst;
   std::forward_list<std::stack<sf::Vector2i>*>::iterator it;
 
@@ -97,14 +98,14 @@ private:
     return 0;
   }
 
-
-protected:
+//protected:
   MazeGrid& grid;
 
 public:
   BranchingMaze(MazeGrid& g) : grid(g) {
     totalRooms = grid.getCols() * grid.getRows();
     visitedRooms = 0;
+    completed = false;
 
     branchance = intRandom(MINCHANCE, MAXCHANCE);
     printf("\n Prob.Ramif: %d %%", branchance);
@@ -123,6 +124,8 @@ public:
     grid.room(iIndex, jIndex).setStatus(RoomStatus::Current);
     visitedRooms++;
   }
+
+  bool isCompleted() { return completed; }
 
   class empty_stack {
       // Evalua si la pila esta vacia
@@ -222,6 +225,9 @@ public:
       // Eliminar pilas vacias
       empty_stack evaluate;
       indxLst.remove_if(evaluate);
+    } else {
+        completed = true;
+        printf("\n Completado!");
     }
   }
 

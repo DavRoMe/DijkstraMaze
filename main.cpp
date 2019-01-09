@@ -3,6 +3,13 @@
 #include <ctime>
 #include <SFML/Graphics.hpp>
 #include "BranchingMaze.hpp"
+#include "DijkstraMaze.hpp"
+
+#ifdef DEBUG_MODE
+const bool DEBUG = true;
+#else
+const bool DEBUG = false;
+#endif // DEBUG_MODE
 
 const int COLUMNS = 80;
 const int ROWS = 45;
@@ -24,9 +31,20 @@ int main(int argc, char* argv[]) {
   MazeGrid grid(WIDTH, HEIGHT, COLUMNS, ROWS, texture);
   BranchingMaze maze(grid);
 
-  bool runMaze = false;
+  DijkstraMaze solver(grid);
 
-  sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Laberinto Dijkstra");
+  bool runMaze = false;
+  bool solved = false;
+
+  int start = maze.intRandom(0, grid.getRows() - 1);
+  int goal = maze.intRandom(0, grid.getRows() - 1);
+
+  sf::RenderWindow window;
+  if(DEBUG) {
+    window.create(sf::VideoMode(WIDTH, HEIGHT), "Laberinto Dijkstra");
+  } else {
+    window.create(sf::VideoMode(WIDTH, HEIGHT), "Laberinto Dijkstra", sf::Style::Fullscreen);
+  }
   window.setFramerateLimit(60);
 
   while(window.isOpen()) {
@@ -38,30 +56,39 @@ int main(int argc, char* argv[]) {
       if(sf::Event::KeyPressed) {
         switch(event.key.code) {
         case sf::Keyboard::Escape:
-            window.close();
-            break;
+          window.close();
+          break;
         case sf::Keyboard::F:
           maze.nextStep();
           sf::sleep(sf::seconds(0.20));
           break;
         case sf::Keyboard::R:
-            runMaze = true;
-            break;
+          runMaze = true;
+          break;
         case sf::Keyboard::Space:
-            runMaze = false;
-            break;
+          runMaze = false;
+          break;
         default:
           break;
         }
       }
     }
 
-    if(runMaze) {
-      maze.nextStep();
-      sf::sleep(sf::seconds(0.1));
-    }
+    if(!solved)
+      if(runMaze) {
+        if(!maze.isCompleted()) {
+          maze.nextStep();
 
-    window.clear(sf::Color(0,0,0));
+        } else {
+          runMaze = solver.makeOrigin(0, start);
+          if(!runMaze) {
+            solved = solver.solve(grid.getCols() - 1, goal);
+          }
+        }
+      }
+    sf::sleep(sf::seconds(0.1));
+
+    window.clear(sf::Color(0, 0, 0));
     maze.drawMaze(window);
     window.display();
   }
