@@ -10,13 +10,13 @@
 class BranchingMaze {
 private:
   static const int UP = 0, DOWN = 1, LEFT = 2, RIGHT = 3;
-  static const int MINCHANCE = 1;
-  static const int MAXCHANCE = 25;
+  static const int MINCHANCE = 5;
+  static const int MAXCHANCE = 30;
   int branchance;
   int maxNewBrchs;
   int crntBranches;
   int totalRooms;
-  int visitedRooms;
+  // int visitedRooms;
   bool completed;
   std::forward_list<std::stack<sf::Vector2i>*> indxLst;
   std::forward_list<std::stack<sf::Vector2i>*>::iterator it;
@@ -39,18 +39,18 @@ private:
 
   int getChances(bool up, bool down, bool left, bool right, int arr[4]) {
     int chance = 0;
-    if(up) {
-      arr[0] = 1; chance += arr[0];
-    } else { arr[0] = 0; }
-    if(down) {
-      arr[1] = 1; chance += arr[1];
-    } else { arr[1] = 0; }
-    if(left) {
-      arr[2] = 1; chance += arr[2];
-    } else { arr[2] = 0; }
-    if(right) {
-      arr[3] = 1; chance += arr[3];
-    } else { arr[3] = 0; }
+
+    if(up)    { arr[0] = 1; chance += arr[0];
+    } else    { arr[0] = 0; }
+
+    if(down)  { arr[1] = 1; chance += arr[1];
+    } else    { arr[1] = 0; }
+
+    if(left)  { arr[2] = 1; chance += arr[2];
+    } else    { arr[2] = 0; }
+
+    if(right) { arr[3] = 1; chance += arr[3];
+    } else    { arr[3] = 0; }
 
     return chance;
   }
@@ -98,38 +98,43 @@ private:
     return 0;
   }
 
-//protected:
   MazeGrid& grid;
 
 public:
   BranchingMaze(MazeGrid& g) : grid(g) {
     totalRooms = grid.getCols() * grid.getRows();
-    visitedRooms = 0;
-    completed = false;
 
+    restart();
+  }
+
+  void restart() {
+    completed = false;
     branchance = intRandom(MINCHANCE, MAXCHANCE);
-    printf("\n Prob.Ramif: %d %%", branchance);
+    printf("\n\n Prob.Ramif: %d %%", branchance);
 
     crntBranches = 1;
     maxNewBrchs = intRandom(5, totalRooms / 30);
     printf("\n Max.Ramif: %d", maxNewBrchs);
 
-    indxLst.push_front(new std::stack<sf::Vector2i>);
+    // Limpiar la lista para comenzar nuevo laberinto
+    indxLst.clear();
+
     // Creando primer habitacion
+    indxLst.push_front(new std::stack<sf::Vector2i>);
     (*indxLst.begin())->push(sf::Vector2i(intRandom(0, grid.getCols() - 1), intRandom(0, grid.getRows() - 1)));
 
+    // Haciendo la nueva habitacion como la actual
     int iIndex = (*indxLst.begin())->top().x;
     int jIndex = (*indxLst.begin())->top().y;
-
     grid.room(iIndex, jIndex).setStatus(RoomStatus::Current);
-    visitedRooms++;
   }
 
   bool isCompleted() { return completed; }
 
   class empty_stack {
-      // Evalua si la pila esta vacia
-      public : bool operator() (const std::stack<sf::Vector2i>* stck) { return stck->empty(); };
+    // Evalua si la pila esta vacia
+  public :
+    bool operator()(const std::stack<sf::Vector2i>* stck) { return stck->empty(); };
   };
 
   void nextStep() {
@@ -176,7 +181,7 @@ public:
               }
               // Actualizar estado del vecino escogido y cuenta de visitados
               grid.room(indxLst.front()->top().x, indxLst.front()->top().y).setStatus(RoomStatus::Current);
-              visitedRooms++;
+              // visitedRooms++;
 
               branches--;
             }
@@ -210,7 +215,7 @@ public:
             break;
           }
           grid.room((*it)->top().x, (*it)->top().y).setStatus(RoomStatus::Current);
-          visitedRooms++;
+          // visitedRooms++;
         } else {
           // Retroceder una vez
           grid.room(crrntIndex.x, crrntIndex.y).setStatus(RoomStatus::Revisited);
@@ -219,15 +224,17 @@ public:
             // Si la pila no esta vacia, tomar la ultima habitacion y hacerla la actual
             crrntIndex = (*it)->top();
             grid.room(crrntIndex.x, crrntIndex.y).setStatus(RoomStatus::Current);
-          } else { crntBranches--; }    // Si la pila esta vacia sera eliminada, hay que actializar la cuenta
+          } else {
+            crntBranches--;  // Si la pila esta vacia sera eliminada, hay que actializar la cuenta
+          }
         }
       }
       // Eliminar pilas vacias
       empty_stack evaluate;
       indxLst.remove_if(evaluate);
     } else {
-        completed = true;
-        printf("\n Completado!");
+      completed = true;
+      printf("\n Completado!");
     }
   }
 
@@ -239,5 +246,12 @@ public:
     }
   }
 
-  int intRandom(int minor, int major) { return rand() % (major + 1 - minor) + minor; }
+  int intRandom(int minor, int major) {
+    if(minor < 0) return 0;
+    if(major > minor) {
+      return rand() % (major + 1 - minor) + minor;
+    } else {
+      return minor;
+    }
+  }
 };

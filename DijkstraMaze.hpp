@@ -35,6 +35,7 @@ public:
     permanent = false;
     frstCheck = true;
     preceding = sf::Vector2i(-1, -1);
+    connectedNodes.clear();
   }
 
   void addConnection(int i_nodePos, int j_nodePos) {
@@ -90,22 +91,22 @@ private:
     }
   }
 
-//  class removeFromList {
-//      public : bool operator()(sf::Vector2i& v) {return (nodesMap.find(v.x)->second.find(v.y)->second).isPermanent();}
-//  };
-//  bool removeFromList(const sf::Vector2i& v) { return node(v.x, v.y).isPermanent(); }
-
 public:
   DijkstraMaze(MazeGrid& g) : maze(g) {
+    restart();
+  }
+
+  void restart() {
     permCount = 0;
-    origin = sf::Vector2i(0, 0);
-    makeNodes();
+    origin = sf::Vector2i(-1, -1);
+    goal = sf::Vector2i(-1, -1);
   }
 
   bool makeOrigin(int i, int j) {
     if(origin.x == i && origin.y == j) {
       return false;
     } else {
+      makeNodes();
       maze.room(i, j).setStatus(RoomStatus::Origin);
       origin = sf::Vector2i(i, j);
       node(i, j).makePermanent();
@@ -178,7 +179,7 @@ public:
 
       while(i >= 0 && j >= 0) {
         sf::Vector2i prev = node(i, j).getPreceding();
-        if(prev.x != -1 || prev.y != -1)
+        if(prev.x != -1 || prev.y != -1) {
           if(prev.x != i) {      // Si esta en el eje X
             if(prev.x < i) {   // Si esta a la izquierda
               maze.room(i, j).setLeftPath(true);      // Actual
@@ -196,12 +197,13 @@ public:
               maze.room(i, j + 1).setUpperPath(true); // Inferior
             }
           }
+        }
         // Continuar hasta llegar al origen, actualizando posiciones
         i = prev.x;
         j = prev.y;
       }
-    }
     return true;
+    }
   }
 
 };

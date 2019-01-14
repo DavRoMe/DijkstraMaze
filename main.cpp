@@ -7,12 +7,15 @@
 
 #ifdef DEBUG_MODE
 const bool DEBUG = true;
+const int COLUMNS = 80;
+const int ROWS = 40;
 #else
 const bool DEBUG = false;
-#endif // DEBUG_MODE
-
 const int COLUMNS = 80;
 const int ROWS = 45;
+#endif // DEBUG_MODE
+
+
 const int WIDTH = 16 * COLUMNS;
 const int HEIGHT = 16 * ROWS;
 
@@ -26,9 +29,16 @@ int main(int argc, char* argv[]) {
     sf::sleep(sf::seconds(2.0));
     return 0;
   }
-//  texture.setSmooth(true);
 
   MazeGrid grid(WIDTH, HEIGHT, COLUMNS, ROWS, texture);
+  if(DEBUG) {
+    std::cout << " Columnas: " << COLUMNS << std::endl;
+    std::cout << " Filas: " << ROWS << std::endl;
+    std::cout << " Resolucion ventana: " << WIDTH << " x " << HEIGHT << std::endl;
+    std::cout << " Ancho habitacion: " << grid.getCellW() << std::endl;
+    std::cout << " Altura habitacion: " << grid.getCellH() << "\n\n";
+  }
+
   BranchingMaze maze(grid);
 
   DijkstraMaze solver(grid);
@@ -47,14 +57,22 @@ int main(int argc, char* argv[]) {
   }
   window.setFramerateLimit(60);
 
+  // Ciclo while //////////
   while(window.isOpen()) {
     sf::Event event;
     while(window.pollEvent(event)) {
       if(event.type == sf::Event::Closed) {
         window.close();
       }
-      if(sf::Event::KeyPressed) {
+
+      if(event.type == sf::Event::KeyReleased) {
         switch(event.key.code) {
+        case sf::Keyboard::Delete:
+          grid.restart();
+          maze.restart();
+          solver.restart();
+          solved = false;
+          break;
         case sf::Keyboard::Escape:
           window.close();
           break;
@@ -74,19 +92,17 @@ int main(int argc, char* argv[]) {
       }
     }
 
-    if(!solved)
+    if(!solved) {
       if(runMaze) {
         if(!maze.isCompleted()) {
           maze.nextStep();
-
         } else {
-          runMaze = solver.makeOrigin(0, start);
-          if(!runMaze) {
-            solved = solver.solve(grid.getCols() - 1, goal);
-          }
+          runMaze = !solver.makeOrigin(0, maze.intRandom(0, grid.getRows() - 1));
+          solved = solver.solve(grid.getCols() - 1, maze.intRandom(0, grid.getRows() - 1));
         }
       }
-    sf::sleep(sf::seconds(0.1));
+    }
+    sf::sleep(sf::seconds(0.05));
 
     window.clear(sf::Color(0, 0, 0));
     maze.drawMaze(window);

@@ -23,9 +23,7 @@ public:
   MazeRoom(int x_pos, int y_pos) {
     this->x_pos = x_pos;
     this->y_pos = y_pos;
-    status = RoomStatus::Unvisited;
-    upperWall = lowerWall = leftWall = rightWall = true;
-    upperPath = lowerPath = leftPath = rightPath = false;
+    restart();
   }
 
   bool hasUpperWall()   { return upperWall; }
@@ -54,6 +52,11 @@ public:
   void setRightPath(bool bValue)    { rightPath = bValue; }
 
   void setStatus(RoomStatus status) { this->status = status; }
+  void restart() {
+    status = RoomStatus::Unvisited;
+    upperWall = lowerWall = leftWall = rightWall = true;
+    upperPath = lowerPath = leftPath = rightPath = false;
+  }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -76,7 +79,7 @@ private:
   sf::Vector2i lowerWallPos = sf::Vector2i(texAreaWidth * 2, 0);
   sf::Vector2i leftWallPos  = sf::Vector2i(texAreaWidth * 3, 0);
   sf::Vector2i rightWallPos = sf::Vector2i(texAreaWidth * 4, 0);
-  sf::Vector2i solidColorPos = sf::Vector2i(0, texAreaHeight);
+  sf::Vector2i solidColorPos= sf::Vector2i(0, texAreaHeight);
   sf::Vector2i upperPathPos = sf::Vector2i(texAreaWidth, texAreaHeight);
   sf::Vector2i lowerPathPos = sf::Vector2i(texAreaWidth * 2, texAreaHeight);
   sf::Vector2i leftPathPos  = sf::Vector2i(texAreaWidth * 3, texAreaHeight);
@@ -140,14 +143,10 @@ public:
   }
 
   bool hasNeighbours(int i, int j) {
-    if(canGoDown(i, j))
-      return true;
-    if(canGoLeft(i, j))
-      return true;
-    if(canGoRight(i, j))
-      return true;
-    if(canGoUp(i, j))
-      return true;
+    if(canGoDown(i, j))  return true;
+    if(canGoLeft(i, j))  return true;
+    if(canGoRight(i, j)) return true;
+    if(canGoUp(i, j))    return true;
 
     return false;
   }
@@ -217,6 +216,14 @@ public:
     if(room(i, j).hasRightPath()) {
       sprite.setTextureRect(sf::IntRect(rightPathPos, texAreaSize));
       window.draw(sprite);
+    }
+  }
+
+  void restart() {
+    for(int i = 0; i < getCols(); i++) {
+      for(int j = 0; j < getRows(); j++) {
+        room(i, j).restart();
+      }
     }
   }
 };
