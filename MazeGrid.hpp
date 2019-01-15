@@ -57,6 +57,10 @@ public:
     upperWall = lowerWall = leftWall = rightWall = true;
     upperPath = lowerPath = leftPath = rightPath = false;
   }
+  void clearpath() {
+    status = RoomStatus::Revisited;
+    upperPath = lowerPath = leftPath = rightPath = false;
+  }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -223,6 +227,13 @@ public:
     for(int i = 0; i < getCols(); i++) {
       for(int j = 0; j < getRows(); j++) {
         room(i, j).restart();
+      }
+    }
+  }
+  void clearpath() {
+    for(int i = 0; i < getCols(); i++) {
+      for(int j = 0; j < getRows(); j++) {
+        room(i, j).clearpath();
       }
     }
   }

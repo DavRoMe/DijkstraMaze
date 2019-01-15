@@ -106,7 +106,9 @@ public:
     if(origin.x == i && origin.y == j) {
       return false;
     } else {
+      permCount = 0;
       makeNodes();
+      maze.clearpath();
       maze.room(i, j).setStatus(RoomStatus::Origin);
       origin = sf::Vector2i(i, j);
       node(i, j).makePermanent();

@@ -92,7 +92,18 @@ int main(int argc, char* argv[]) {
       }
     }
 
-    if(!solved) {
+    if(solved) {
+      // Mouse click
+      sf::Vector2f worldPos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+      if(sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+        sf::Vector2i indice(grid.getAreaIndex(worldPos.x, worldPos.y));
+        solver.solve(indice.x, indice.y);
+      }
+      if(sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
+        sf::Vector2i indice(grid.getAreaIndex(worldPos.x, worldPos.y));
+        solver.makeOrigin(indice.x, indice.y);
+      }
+    } else {
       if(runMaze) {
         if(!maze.isCompleted()) {
           maze.nextStep();
@@ -104,7 +115,7 @@ int main(int argc, char* argv[]) {
     }
     sf::sleep(sf::seconds(0.05));
 
-    window.clear(sf::Color(0, 0, 0));
+    window.clear(sf::Color(5, 5, 5));
     maze.drawMaze(window);
     window.display();
   }
